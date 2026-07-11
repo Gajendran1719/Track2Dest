@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Register – SmartCampus Nav{% endblock %}
+{% block extra_head %}
+<style>
+.auth-wrap{min-height:calc(100vh - 64px);display:flex;align-items:center;justify-content:center;padding:2rem}
+.auth-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:2.5rem;width:100%;max-width:420px}
+.auth-title{font-size:1.6rem;font-weight:700;margin-bottom:.3rem}
+.auth-sub{color:var(--text-muted);font-size:.9rem;margin-bottom:2rem}
+.auth-footer{text-align:center;margin-top:1.5rem;color:var(--text-muted);font-size:.875rem}
+.auth-footer a{color:var(--accent);text-decoration:none}
+.role-group{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem}
+.role-opt{position:relative}
+.role-opt input{position:absolute;opacity:0;width:0;height:0}
+.role-opt label{display:block;text-align:center;padding:.6rem;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:.85rem;color:var(--text-muted);transition:all .2s}
+.role-opt input:checked + label{border-color:var(--accent);color:var(--accent);background:rgba(88,166,255,.1)}
+</style>
+{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-card">
+    <h1 class="auth-title">Create account</h1>
+    <p class="auth-sub">Join SmartCampus Nav to start navigating</p>
+    <form method="POST">
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" name="name" placeholder="Your name" required/>
+      </div>
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" name="email" placeholder="you@college.edu" required/>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" name="password" placeholder="Create a password" required minlength="6"/>
+      </div>
+      <div class="form-group">
+        <label>I am a…</label>
+        <div class="role-group">
+          <div class="role-opt">
+            <input type="radio" name="role" id="r-student" value="student" checked/>
+            <label for="r-student">🎓 Student</label>
+          </div>
+          <div class="role-opt">
+            <input type="radio" name="role" id="r-staff" value="staff"/>
+            <label for="r-staff">👨‍🏫 Staff</label>
+          </div>
+          <div class="role-opt">
+            <input type="radio" name="role" id="r-visitor" value="visitor"/>
+            <label for="r-visitor">🧳 Visitor</label>
+          </div>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary btn-lg" style="width:100%">Create Account</button>
+    </form>
+    <div class="auth-footer">Already have an account? <a href="{{ url_for('login') }}">Login here</a></div>
+  </div>
+</div>
+{% endblock %}

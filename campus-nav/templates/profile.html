@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Profile – SmartCampus Nav{% endblock %}
+{% block content %}
+<div class="container" style="padding-top:1.5rem;max-width:700px">
+  <div style="margin-bottom:1.5rem">
+    <h1 style="font-size:1.6rem;font-weight:700">My Profile</h1>
+    <p style="color:var(--text-muted);font-size:.9rem">Account information and navigation statistics</p>
+  </div>
+
+  <div class="card" style="margin-bottom:1.5rem">
+    <div style="display:flex;align-items:center;gap:1.25rem">
+      <div style="width:64px;height:64px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.8rem;font-weight:700;color:#0d1117;flex-shrink:0">
+        {{ user.name[0].upper() }}
+      </div>
+      <div>
+        <div style="font-size:1.3rem;font-weight:700">{{ user.name }}</div>
+        <div style="color:var(--text-muted);font-size:.9rem">{{ user.email }}</div>
+        <span class="badge badge-blue" style="margin-top:.4rem">{{ user.role.capitalize() }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem">
+    <div class="stat">
+      <div class="stat-value" style="color:var(--accent)">{{ total_nav }}</div>
+      <div class="stat-label">Navigations</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" style="color:var(--accent2)">{{ total_dist }}m</div>
+      <div class="stat-label">Total Distance</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" style="color:var(--accent4)">{{ (total_dist / 80)|round(0)|int if total_dist else 0 }}</div>
+      <div class="stat-label">Minutes Walked</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">Account Details</div>
+    <div style="display:flex;flex-direction:column;gap:.75rem;font-size:.9rem">
+      <div style="display:flex;justify-content:space-between;padding:.6rem;background:var(--surface2);border-radius:8px">
+        <span style="color:var(--text-muted)">Full Name</span><span>{{ user.name }}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:.6rem;background:var(--surface2);border-radius:8px">
+        <span style="color:var(--text-muted)">Email</span><span>{{ user.email }}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:.6rem;background:var(--surface2);border-radius:8px">
+        <span style="color:var(--text-muted)">Role</span><span class="badge badge-blue">{{ user.role.capitalize() }}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:.6rem;background:var(--surface2);border-radius:8px">
+        <span style="color:var(--text-muted)">Member Since</span><span>{{ user.created_at.strftime('%d %B %Y') }}</span>
+      </div>
+    </div>
+    <div style="margin-top:1rem;display:flex;gap:.75rem">
+      <a href="{{ url_for('navigate') }}" class="btn btn-primary">🗺️ Navigate</a>
+      <a href="{{ url_for('history') }}" class="btn btn-outline">📋 View History</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

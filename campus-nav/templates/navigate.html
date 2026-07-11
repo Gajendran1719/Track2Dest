@@ -1,0 +1,316 @@
+{% extends "base.html" %}
+{% block title %}Navigate – SmartCampus Nav{% endblock %}
+{% block extra_head %}
+<style>
+.nav-layout{display:grid;grid-template-columns:380px 1fr;gap:1.5rem;align-items:start}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.panel-header{padding:1rem 1.25rem;border-bottom:1px solid var(--border);font-family:'Space Grotesk',sans-serif;font-weight:600;display:flex;align-items:center;gap:.5rem}
+.panel-body{padding:1.25rem}
+.upload-zone{border:2px dashed var(--border);border-radius:10px;padding:2rem 1rem;text-align:center;cursor:pointer;transition:all .2s;position:relative}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:rgba(88,166,255,.05)}
+.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-icon{font-size:2.5rem;margin-bottom:.5rem}
+.upload-text{font-weight:500;margin-bottom:.25rem}
+.upload-sub{color:var(--text-muted);font-size:.8rem}
+.preview-img{width:100%;border-radius:8px;margin-top:1rem;display:none;max-height:180px;object-fit:cover}
+.ai-result{display:none;margin-top:1rem}
+.ai-result.show{display:block}
+.detected-loc{background:rgba(63,185,80,.1);border:1px solid rgba(63,185,80,.3);border-radius:8px;padding:1rem;text-align:center;margin-bottom:1rem}
+.detected-loc .loc-name{font-size:1.2rem;font-weight:700;color:var(--accent2)}
+.confidence-bars{display:flex;flex-direction:column;gap:.4rem}
+.conf-row{display:flex;align-items:center;gap:.5rem;font-size:.78rem}
+.conf-label{width:130px;flex-shrink:0;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.conf-bar-wrap{flex:1;background:var(--surface2);border-radius:99px;height:6px}
+.conf-bar{height:100%;border-radius:99px;background:var(--accent);transition:width .6s}
+.conf-pct{width:35px;text-align:right;color:var(--text-muted)}
+.route-meta{display:flex;gap:.75rem;margin-bottom:1rem}
+.meta-pill{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:.5rem .9rem;font-size:.85rem;flex:1;text-align:center}
+.meta-pill strong{display:block;font-size:1rem;color:var(--accent)}
+.instructions-list{display:flex;flex-direction:column;gap:.4rem;max-height:280px;overflow-y:auto}
+.instr-item{background:var(--surface2);border-radius:8px;padding:.6rem .9rem;font-size:.85rem;line-height:1.4}
+#campus-map{width:100%;height:600px;background:#0a0e13;border-radius:0 0 var(--radius) var(--radius);position:relative;overflow:hidden}
+svg#map-svg{width:100%;height:100%}
+.spinner{display:none;text-align:center;padding:1rem}
+.spinner.show{display:block}
+.spin{display:inline-block;width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+{% endblock %}
+{% block content %}
+<div class="container" style="padding-top:1.5rem">
+  <div style="margin-bottom:1.5rem">
+    <h1 style="font-size:1.6rem;font-weight:700">Campus Navigation</h1>
+    <p style="color:var(--text-muted);font-size:.9rem">Upload a photo to detect your location, then select your destination</p>
+  </div>
+  <div class="nav-layout">
+    <div style="display:flex;flex-direction:column;gap:1rem">
+      <!-- Image Upload -->
+      <div class="panel">
+        <div class="panel-header">📸 Step 1 — Upload Your Location Photo</div>
+        <div class="panel-body">
+          <div class="upload-zone" id="drop-zone">
+            <input type="file" id="img-input" accept="image/*"/>
+            <div class="upload-icon">🖼️</div>
+            <div class="upload-text">Drop image or click to browse</div>
+            <div class="upload-sub">JPG · PNG · JPEG · WEBP</div>
+          </div>
+          <img id="preview-img" class="preview-img" alt="Preview"/>
+          <div class="spinner" id="ai-spinner">
+            <div class="spin"></div>
+            <span style="color:var(--text-muted);font-size:.85rem;display:block;margin-top:.4rem">Analyzing with CNN model…</span>
+          </div>
+          <div class="ai-result" id="ai-result">
+            <div class="detected-loc">
+              <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:.25rem">📍 DETECTED LOCATION</div>
+              <div class="loc-name" id="det-name">—</div>
+              <div style="color:var(--text-muted);font-size:.8rem;margin-top:.2rem" id="det-conf">Confidence: —</div>
+            </div>
+            <div style="font-size:.78rem;font-weight:500;color:var(--text-muted);margin-bottom:.5rem">Top Predictions (CNN Output)</div>
+            <div class="confidence-bars" id="conf-bars"></div>
+          </div>
+        </div>
+      </div>
+      <!-- Destination -->
+      <div class="panel" id="dest-panel" style="opacity:.5;pointer-events:none">
+        <div class="panel-header">🎯 Step 2 — Choose Destination</div>
+        <div class="panel-body">
+          <div class="form-group" style="margin-bottom:.75rem">
+            <label>From (AI detected)</label>
+            <input type="text" id="from-loc" readonly style="background:rgba(88,166,255,.08);border-color:rgba(88,166,255,.3);color:var(--accent)"/>
+          </div>
+          <div class="form-group" style="margin-bottom:.75rem">
+            <label>Destination</label>
+            <select id="to-loc">
+              <option value="">Select destination…</option>
+              {% for d in destinations %}
+                <option value="{{ d }}">{{ d }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <button class="btn btn-primary" style="width:100%" id="nav-btn" onclick="planRoute()">🛣️ Find Shortest Route</button>
+        </div>
+      </div>
+      <!-- Route results -->
+      <div class="panel" id="route-panel" style="display:none">
+        <div class="panel-header">🗺️ Step 3 — Navigation Guide</div>
+        <div class="panel-body">
+          <div class="route-meta">
+            <div class="meta-pill"><strong id="r-dist">—</strong>Distance</div>
+            <div class="meta-pill"><strong id="r-eta">—</strong>Walk time</div>
+            <div class="meta-pill"><strong id="r-stops">—</strong>Stops</div>
+          </div>
+          <div style="font-size:.78rem;font-weight:500;color:var(--text-muted);margin-bottom:.5rem">Turn-by-Turn Instructions</div>
+          <div class="instructions-list" id="instr-list"></div>
+          <button class="btn btn-outline btn-sm" style="margin-top:1rem;width:100%" onclick="resetNav()">🔄 New Navigation</button>
+          <a href="{{ url_for('feedback') }}" class="btn btn-outline btn-sm" style="margin-top:.5rem;width:100%">💬 Give Feedback</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Campus Map -->
+    <div class="panel">
+      <div class="panel-header">🏫 Live Campus Map — AI Path Visualization</div>
+      <div id="campus-map">
+        <svg id="map-svg" viewBox="0 100 1000 800" xmlns="http://www.w3.org/2000/svg">
+          <rect x="0" y="0" width="1000" height="1000" fill="#0a0e13"/>
+          <rect x="80" y="140" width="840" height="760" rx="24" fill="#0d1a0f" stroke="#1a3a1f" stroke-width="1.5"/>
+          <!-- Roads -->
+          <line x1="500" y1="920" x2="500" y2="140" stroke="#141e28" stroke-width="30"/>
+          <line x1="80" y1="500" x2="920" y2="500" stroke="#141e28" stroke-width="22"/>
+          <line x1="250" y1="300" x2="750" y2="300" stroke="#141e28" stroke-width="16"/>
+          <line x1="180" y1="700" x2="820" y2="700" stroke="#141e28" stroke-width="14"/>
+          <!-- Road centre lines -->
+          <line x1="500" y1="920" x2="500" y2="140" stroke="#1e3040" stroke-width="2" stroke-dasharray="18,14"/>
+          <line x1="80" y1="500" x2="920" y2="500" stroke="#1e3040" stroke-width="2" stroke-dasharray="18,14"/>
+          <g id="edges-layer"></g>
+          <g id="route-layer"></g>
+          <g id="nodes-layer"></g>
+        </svg>
+      </div>
+      <div style="padding:.75rem 1.25rem;border-top:1px solid var(--border);display:flex;gap:1.25rem;flex-wrap:wrap;font-size:.78rem;color:var(--text-muted)">
+        <span>🟢 Your Location</span><span>🔴 Destination</span><span>🟡 Route Waypoint</span><span>🔵 Campus Building</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const NODES = {{ nodes_json }};
+const EDGES = {{ edges_json }};
+
+let detectedLocation = null;
+
+function drawEdges() {
+  const layer = document.getElementById('edges-layer');
+  layer.innerHTML = '';
+  EDGES.forEach(([u, v]) => {
+    const a = NODES[u], b = NODES[v];
+    if (!a || !b) return;
+    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',a.x); line.setAttribute('y1',a.y);
+    line.setAttribute('x2',b.x); line.setAttribute('y2',b.y);
+    line.setAttribute('stroke','#1e2c3a'); line.setAttribute('stroke-width','3');
+    line.setAttribute('stroke-linecap','round');
+    layer.appendChild(line);
+  });
+}
+
+function drawNodes(highlight, dest, routeNodes) {
+  highlight = highlight || null; dest = dest || null; routeNodes = routeNodes || [];
+  const layer = document.getElementById('nodes-layer');
+  layer.innerHTML = '';
+  Object.entries(NODES).forEach(([name, data]) => {
+    const isHL = name === highlight, isDst = name === dest;
+    const isRt = routeNodes.includes(name) && !isHL && !isDst;
+    const color = isDst ? '#f85149' : isHL ? '#3fb950' : isRt ? '#f0c040' : data.color;
+    const r = (isDst || isHL) ? 14 : isRt ? 11 : 8;
+
+    if (isHL || isDst) {
+      const pulse = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      pulse.setAttribute('cx',data.x); pulse.setAttribute('cy',data.y); pulse.setAttribute('r',r+8);
+      pulse.setAttribute('fill','none'); pulse.setAttribute('stroke',color); pulse.setAttribute('stroke-width','2');
+      pulse.setAttribute('opacity','0.35');
+      const anim = document.createElementNS('http://www.w3.org/2000/svg','animate');
+      anim.setAttribute('attributeName','r'); anim.setAttribute('values',(r+6)+';'+(r+16)+';'+(r+6));
+      anim.setAttribute('dur','2s'); anim.setAttribute('repeatCount','indefinite');
+      pulse.appendChild(anim); layer.appendChild(pulse);
+    }
+
+    const circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    circle.setAttribute('cx',data.x); circle.setAttribute('cy',data.y); circle.setAttribute('r',r);
+    circle.setAttribute('fill',color); circle.setAttribute('stroke','#0d1117'); circle.setAttribute('stroke-width','2.5');
+    layer.appendChild(circle);
+
+    const text = document.createElementNS('http://www.w3.org/2000/svg','text');
+    text.setAttribute('x',data.x); text.setAttribute('y',data.y+r+15);
+    text.setAttribute('text-anchor','middle'); text.setAttribute('font-size','11');
+    text.setAttribute('font-family','Inter,sans-serif');
+    text.setAttribute('fill',(isHL||isDst||isRt) ? color : '#6e7681');
+    text.setAttribute('font-weight',(isHL||isDst) ? '700' : '400');
+    text.textContent = name;
+    layer.appendChild(text);
+  });
+}
+
+function drawRoute(path) {
+  const layer = document.getElementById('route-layer');
+  layer.innerHTML = '';
+  if (path.length < 2) return;
+  const d = path.map((n,i) => (i===0?'M':'L')+NODES[n].x+' '+NODES[n].y).join(' ');
+
+  const glow = document.createElementNS('http://www.w3.org/2000/svg','path');
+  glow.setAttribute('d',d); glow.setAttribute('stroke','#58a6ff');
+  glow.setAttribute('stroke-width','12'); glow.setAttribute('fill','none');
+  glow.setAttribute('stroke-linecap','round'); glow.setAttribute('opacity','0.2');
+  layer.appendChild(glow);
+
+  const main = document.createElementNS('http://www.w3.org/2000/svg','path');
+  main.setAttribute('d',d); main.setAttribute('stroke','#58a6ff');
+  main.setAttribute('stroke-width','4'); main.setAttribute('fill','none');
+  main.setAttribute('stroke-linecap','round'); main.setAttribute('stroke-dasharray','10,6');
+  const anim = document.createElementNS('http://www.w3.org/2000/svg','animate');
+  anim.setAttribute('attributeName','stroke-dashoffset');
+  anim.setAttribute('values','2000;0'); anim.setAttribute('dur','2.5s'); anim.setAttribute('repeatCount','indefinite');
+  main.setAttribute('stroke-dashoffset','2000');
+  main.appendChild(anim); layer.appendChild(main);
+}
+
+document.getElementById('img-input').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = document.getElementById('preview-img');
+    img.src = ev.target.result; img.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+
+  document.getElementById('ai-spinner').classList.add('show');
+  document.getElementById('ai-result').classList.remove('show');
+
+  const fd = new FormData();
+  fd.append('image', file);
+  fetch('/api/recognize', {method:'POST', body:fd})
+    .then(r => r.json())
+    .then(data => {
+      document.getElementById('ai-spinner').classList.remove('show');
+      if (data.error) { alert(data.error); return; }
+      detectedLocation = data.detected_location;
+      document.getElementById('det-name').textContent = data.detected_location;
+      document.getElementById('det-conf').textContent = 'Confidence: ' + (data.confidence*100).toFixed(1) + '%';
+      const bars = document.getElementById('conf-bars');
+      bars.innerHTML = '';
+      Object.entries(data.top_predictions).slice(0,5).forEach(([loc, score]) => {
+        const pct = (score*100).toFixed(1);
+        bars.innerHTML += '<div class="conf-row"><span class="conf-label">'+loc+'</span><div class="conf-bar-wrap"><div class="conf-bar" style="width:'+pct+'%"></div></div><span class="conf-pct">'+pct+'%</span></div>';
+      });
+      document.getElementById('ai-result').classList.add('show');
+      document.getElementById('from-loc').value = data.detected_location;
+      const dp = document.getElementById('dest-panel');
+      dp.style.opacity='1'; dp.style.pointerEvents='auto';
+      drawNodes(data.detected_location, null, []);
+    })
+    .catch(() => { document.getElementById('ai-spinner').classList.remove('show'); alert('AI server error.'); });
+});
+
+// Drag & drop
+const dz = document.getElementById('drop-zone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('drag');
+  const file = e.dataTransfer.files[0];
+  if (file) {
+    const dt = new DataTransfer(); dt.items.add(file);
+    document.getElementById('img-input').files = dt.files;
+    document.getElementById('img-input').dispatchEvent(new Event('change'));
+  }
+});
+
+function planRoute() {
+  const from = document.getElementById('from-loc').value;
+  const to = document.getElementById('to-loc').value;
+  if (!from) { alert('Upload an image first.'); return; }
+  if (!to) { alert('Select a destination.'); return; }
+  if (from === to) { alert('Already at destination!'); return; }
+  document.getElementById('nav-btn').textContent = '⏳ Calculating…';
+  fetch('/api/navigate', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({from, to})
+  })
+  .then(r => r.json())
+  .then(data => {
+    document.getElementById('nav-btn').textContent = '🛣️ Find Shortest Route';
+    if (data.error) { alert(data.error); return; }
+    document.getElementById('r-dist').textContent = data.distance + 'm';
+    document.getElementById('r-eta').textContent = data.eta_minutes + ' min';
+    document.getElementById('r-stops').textContent = data.path.length;
+    const list = document.getElementById('instr-list');
+    list.innerHTML = data.instructions.map(i => '<div class="instr-item">'+i+'</div>').join('');
+    document.getElementById('route-panel').style.display = 'block';
+    drawRoute(data.path);
+    drawNodes(from, to, data.path);
+    document.getElementById('route-panel').scrollIntoView({behavior:'smooth', block:'nearest'});
+  })
+  .catch(() => { document.getElementById('nav-btn').textContent = '🛣️ Find Shortest Route'; alert('Route error.'); });
+}
+
+function resetNav() {
+  detectedLocation = null;
+  document.getElementById('img-input').value = '';
+  document.getElementById('preview-img').style.display = 'none';
+  document.getElementById('ai-result').classList.remove('show');
+  document.getElementById('from-loc').value = '';
+  document.getElementById('to-loc').value = '';
+  document.getElementById('route-panel').style.display = 'none';
+  const dp = document.getElementById('dest-panel');
+  dp.style.opacity='.5'; dp.style.pointerEvents='none';
+  document.getElementById('route-layer').innerHTML = '';
+  drawNodes();
+}
+
+drawEdges();
+drawNodes();
+</script>
+{% endblock %}

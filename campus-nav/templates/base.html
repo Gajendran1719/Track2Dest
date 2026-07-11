@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>{% block title %}SmartCampus Nav{% endblock %}</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #0d1117;
+  --surface: #161b22;
+  --surface2: #21262d;
+  --border: #30363d;
+  --accent: #58a6ff;
+  --accent2: #3fb950;
+  --accent3: #f85149;
+  --accent4: #d29922;
+  --text: #e6edf3;
+  --text-muted: #8b949e;
+  --radius: 12px;
+  --shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;line-height:1.6}
+h1,h2,h3,.brand{font-family:'Space Grotesk',sans-serif}
+
+/* NAV */
+nav{background:rgba(22,27,34,0.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;padding:0 2rem}
+.nav-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:64px}
+.brand{font-size:1.2rem;font-weight:700;color:var(--accent);text-decoration:none;display:flex;align-items:center;gap:.5rem}
+.brand span{color:var(--text)}
+.nav-links{display:flex;align-items:center;gap:.25rem}
+.nav-links a{color:var(--text-muted);text-decoration:none;padding:.5rem .9rem;border-radius:8px;font-size:.9rem;font-weight:500;transition:all .2s}
+.nav-links a:hover,.nav-links a.active{color:var(--text);background:var(--surface2)}
+.nav-badge{background:var(--accent);color:#0d1117;padding:.15rem .6rem;border-radius:99px;font-size:.75rem;font-weight:700}
+
+/* CONTAINER */
+.container{max-width:1200px;margin:0 auto;padding:2rem}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;box-shadow:var(--shadow)}
+.card-header{font-family:'Space Grotesk',sans-serif;font-size:1.1rem;font-weight:600;margin-bottom:1rem;color:var(--text);display:flex;align-items:center;gap:.5rem}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:.4rem;padding:.6rem 1.2rem;border-radius:8px;font-size:.9rem;font-weight:600;cursor:pointer;border:none;text-decoration:none;transition:all .2s;font-family:'Inter',sans-serif}
+.btn-primary{background:var(--accent);color:#0d1117}
+.btn-primary:hover{background:#79c0ff;transform:translateY(-1px)}
+.btn-success{background:var(--accent2);color:#0d1117}
+.btn-success:hover{background:#56d364}
+.btn-danger{background:var(--accent3);color:#fff}
+.btn-outline{background:transparent;color:var(--text);border:1px solid var(--border)}
+.btn-outline:hover{background:var(--surface2)}
+.btn-lg{padding:.85rem 1.8rem;font-size:1rem}
+.btn-sm{padding:.35rem .75rem;font-size:.8rem}
+
+/* FORMS */
+.form-group{margin-bottom:1.25rem}
+label{display:block;font-size:.85rem;font-weight:500;color:var(--text-muted);margin-bottom:.4rem}
+input,select,textarea{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:.65rem .9rem;color:var(--text);font-size:.9rem;font-family:'Inter',sans-serif;transition:border-color .2s;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+select option{background:var(--surface2)}
+
+/* ALERTS */
+.alert{padding:.8rem 1rem;border-radius:8px;margin-bottom:1rem;font-size:.9rem;display:flex;align-items:center;gap:.5rem}
+.alert-success{background:rgba(63,185,80,.15);border:1px solid rgba(63,185,80,.3);color:#56d364}
+.alert-error{background:rgba(248,81,73,.15);border:1px solid rgba(248,81,73,.3);color:#ff7b72}
+.alert-info{background:rgba(88,166,255,.15);border:1px solid rgba(88,166,255,.3);color:#79c0ff}
+
+/* BADGES */
+.badge{display:inline-block;padding:.2rem .6rem;border-radius:99px;font-size:.75rem;font-weight:600}
+.badge-blue{background:rgba(88,166,255,.2);color:var(--accent)}
+.badge-green{background:rgba(63,185,80,.2);color:var(--accent2)}
+.badge-orange{background:rgba(210,153,34,.2);color:var(--accent4)}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th{color:var(--text-muted);font-weight:500;font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;padding:.75rem 1rem;text-align:left;border-bottom:1px solid var(--border)}
+td{padding:.75rem 1rem;border-bottom:1px solid rgba(48,54,61,.5)}
+tr:hover td{background:rgba(255,255,255,.02)}
+
+/* GRID */
+.grid{display:grid;gap:1rem}
+.grid-2{grid-template-columns:repeat(2,1fr)}
+.grid-3{grid-template-columns:repeat(3,1fr)}
+.grid-4{grid-template-columns:repeat(4,1fr)}
+
+/* STAT */
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem}
+.stat-value{font-family:'Space Grotesk',sans-serif;font-size:2rem;font-weight:700;line-height:1}
+.stat-label{color:var(--text-muted);font-size:.85rem;margin-top:.3rem}
+
+/* PROGRESS */
+.progress{background:var(--surface2);border-radius:99px;height:6px;overflow:hidden}
+.progress-bar{height:100%;border-radius:99px;background:var(--accent);transition:width .5s}
+
+/* DIVIDER */
+.divider{border:none;border-top:1px solid var(--border);margin:1.5rem 0}
+
+/* FLASH */
+.flashes{max-width:1200px;margin:1rem auto 0;padding:0 2rem}
+</style>
+{% block extra_head %}{% endblock %}
+</head>
+<body>
+<nav>
+  <div class="nav-inner">
+    <a href="{{ url_for('index') }}" class="brand">🎓 <span>SmartCampus</span><span style="color:var(--accent-muted)"> Nav</span></a>
+    <div class="nav-links">
+      {% if session.user_id %}
+        <a href="{{ url_for('navigate') }}">🗺️ Navigate</a>
+        <a href="{{ url_for('history') }}">📋 History</a>
+        <a href="{{ url_for('feedback') }}">💬 Feedback</a>
+        <a href="{{ url_for('profile') }}">👤 {{ session.user_name }}</a>
+        <a href="{{ url_for('logout') }}" class="btn btn-outline btn-sm" style="margin-left:.5rem">Logout</a>
+      {% else %}
+        <a href="{{ url_for('login') }}">Login</a>
+        <a href="{{ url_for('register') }}" class="btn btn-primary btn-sm" style="margin-left:.5rem">Register</a>
+      {% endif %}
+    </div>
+  </div>
+</nav>
+
+<div class="flashes">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+      <div class="alert alert-{{ 'success' if cat == 'success' else 'error' if cat == 'error' else 'info' }}">
+        {{ '✅' if cat == 'success' else '❌' if cat == 'error' else 'ℹ️' }} {{ msg }}
+      </div>
+    {% endfor %}
+  {% endwith %}
+</div>
+
+{% block content %}{% endblock %}
+</body>
+</html>

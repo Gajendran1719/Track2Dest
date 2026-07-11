@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Feedback – SmartCampus Nav{% endblock %}
+{% block content %}
+<div class="container" style="padding-top:1.5rem;max-width:600px">
+  <div style="margin-bottom:1.5rem">
+    <h1 style="font-size:1.6rem;font-weight:700">AI Feedback & Model Improvement</h1>
+    <p style="color:var(--text-muted);font-size:.9rem">Help us improve landmark recognition accuracy</p>
+  </div>
+  <div class="card">
+    <div style="background:rgba(88,166,255,.08);border:1px solid rgba(88,166,255,.2);border-radius:8px;padding:1rem;margin-bottom:1.5rem;font-size:.875rem;color:var(--text-muted)">
+      🤖 Your feedback directly improves the CNN model's training dataset and helps retrain the landmark classifier for better accuracy.
+    </div>
+    <form method="POST">
+      <div class="form-group">
+        <label>What location did the AI predict?</label>
+        <select name="predicted" required>
+          <option value="">Select predicted location…</option>
+          {% for loc in locations %}
+            <option value="{{ loc }}">{{ loc }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>What was the actual correct location?</label>
+        <select name="correct" required>
+          <option value="">Select correct location…</option>
+          {% for loc in locations %}
+            <option value="{{ loc }}">{{ loc }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Overall Navigation Rating</label>
+        <div style="display:flex;gap:.5rem;margin-top:.4rem">
+          {% for i in range(1, 6) %}
+            <label style="display:flex;flex-direction:column;align-items:center;gap:.3rem;cursor:pointer;flex:1">
+              <input type="radio" name="rating" value="{{ i }}" required style="width:auto"/>
+              <span style="font-size:1.4rem">{{ '⭐' }}</span>
+              <span style="font-size:.75rem;color:var(--text-muted)">{{ i }}</span>
+            </label>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Additional Comments (optional)</label>
+        <textarea name="comment" rows="3" placeholder="Any other feedback about navigation accuracy or experience…"></textarea>
+      </div>
+      <button type="submit" class="btn btn-primary btn-lg" style="width:100%">Submit Feedback</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
